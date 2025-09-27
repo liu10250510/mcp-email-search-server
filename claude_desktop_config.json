@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "email-search-agent": {
+      "command": "python",
+      "args": ["-m", "mcp_email_search.server"],
+      "cwd": "/Users/lucy/projects/mcp_email_search",
+      "env": {
+        "PYTHONPATH": "/Users/lucy/projects/mcp_email_search"
+      }
+    }
+  }
+}
