@@ -182,7 +182,7 @@ list_email_folders()
 ### Common Errors
 
 - **"Yahoo credentials not configured"**: Set YAHOO_EMAIL and YAHOO_APP_PASSWORD
-- **"Failed to connect to Gmail/Yahoo"**: Check internet connection and credential validity
+- **"Failed to connect to Yahoo"**: Check internet connection and credential validity
 
 ## Development
 
