@@ -80,11 +80,6 @@ Once Claude Desktop restarts, you can test the email search agent by asking Clau
 Make sure your `.env` file in the project directory contains:
 
 ```
-# Gmail OAuth2 credentials
-GMAIL_CLIENT_ID=your_gmail_client_id
-GMAIL_CLIENT_SECRET=your_gmail_client_secret
-GMAIL_REFRESH_TOKEN=your_gmail_refresh_token
-
 # Yahoo IMAP credentials
 YAHOO_EMAIL=your_yahoo_email@yahoo.com
 YAHOO_APP_PASSWORD=your_yahoo_app_password
