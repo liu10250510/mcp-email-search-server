@@ -31,6 +31,10 @@ class EmailSearchParams(BaseModel):
         default=False, 
         description="Whether to include emails with attachments"
     )
+    folder: Optional[str] = Field(
+        default="INBOX", 
+        description="Email folder to search in (e.g., 'INBOX', 'Sent', 'Drafts', 'ALL' for all folders)"
+    )
 
 
 class EmailSearchResult(BaseModel):
@@ -44,6 +48,7 @@ class EmailSearchResult(BaseModel):
     snippet: str = Field(description="Email preview snippet")
     has_attachments: bool = Field(description="Whether email has attachments")
     provider: Literal["gmail", "yahoo"] = Field(description="Email provider")
+    folder: str = Field(description="Email folder name")
 
 
 class EmailDetails(EmailSearchResult):

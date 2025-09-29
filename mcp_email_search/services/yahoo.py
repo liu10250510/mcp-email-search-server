@@ -39,6 +39,37 @@ class YahooService:
         except Exception as e:
             raise ValueError(f"Failed to connect to Yahoo Mail: {str(e)}")
     
+    async def list_folders(self) -> List[str]:
+        """List available email folders."""
+        await self._connect()
+        
+        try:
+            # Ensure connection is active
+            if self.connection is None:
+                return ["INBOX"]
+                
+            status, folders = self.connection.list()
+            if status != "OK":
+                return ["INBOX"]
+            
+            folder_names = []
+            for folder in folders:
+                # Parse folder name from IMAP response
+                folder_str = folder.decode() if isinstance(folder, bytes) else folder
+                # Extract folder name (format: '(\\HasNoChildren) "." "INBOX"')
+                match = re.search(r'"([^"]*)"$', folder_str)
+                if match:
+                    folder_name = match.group(1)
+                    folder_names.append(folder_name)
+            
+            return folder_names if folder_names else ["INBOX"]
+            
+        except Exception as e:
+            logger.warning(f"Failed to list folders: {e}")
+            return ["INBOX"]
+        finally:
+            await self._disconnect()
+    
     async def _connect(self) -> None:
         """Connect to Yahoo Mail IMAP server."""
         if self.connection is not None:
@@ -69,80 +100,153 @@ class YahooService:
         await self._connect()
         
         try:
-            # Select INBOX
-            self.connection.select("INBOX")
-            
-            # Build search criteria
-            search_criteria = []
-            
-            # Add keyword search (search in subject and body)
-            if params.keywords:
-                # IMAP search for keywords in subject or body
-                search_criteria.append(f'OR SUBJECT "{params.keywords}" BODY "{params.keywords}"')
-            
-            # Add date filters
-            if params.date_from:
-                date_obj = datetime.strptime(params.date_from, "%Y-%m-%d")
-                search_criteria.append(f'SINCE "{date_obj.strftime("%d-%b-%Y")}"')
-            
-            if params.date_to:
-                date_obj = datetime.strptime(params.date_to, "%Y-%m-%d")
-                search_criteria.append(f'BEFORE "{date_obj.strftime("%d-%b-%Y")}"')
-            
-            # Perform search
-            search_query = " ".join(search_criteria) if search_criteria else "ALL"
-            
-            status, message_ids = self.connection.search(None, search_query)
-            if status != "OK" or not message_ids[0]:
-                return []
-            
-            # Get message IDs and limit results
-            ids = message_ids[0].split()
-            limited_ids = ids[-params.max_results:]  # Get most recent emails
-            
-            # Get details for each message
-            email_results = []
-            for msg_id in reversed(limited_ids):  # Reverse to get newest first
+            # Determine which folders to search
+            folders_to_search = []
+            if params.folder == "ALL":
+                # Search all folders - get list without disconnecting
+                if self.connection is None:
+                    await self._connect()
                 try:
-                    email_result = await self._get_message_details(msg_id.decode(), snippet_only=True)
-                    if email_result:
-                        # Filter by attachments if requested
-                        if params.include_attachments and not email_result.has_attachments:
-                            continue
-                        email_results.append(email_result)
+                    status, folders = self.connection.list()
+                    if status == "OK" and folders:
+                        for folder in folders:
+                            folder_str = folder.decode() if isinstance(folder, bytes) else folder
+                            match = re.search(r'"([^"]*)"$', folder_str)
+                            if match:
+                                folders_to_search.append(match.group(1))
+                    if not folders_to_search:
+                        folders_to_search = ["INBOX"]
                 except Exception as e:
-                    logger.warning(f"Failed to get details for message {msg_id}: {e}")
+                    logger.warning(f"Failed to list folders during search: {e}")
+                    folders_to_search = ["INBOX"]
+            else:
+                # Search specific folder (default is INBOX)
+                folders_to_search = [params.folder or "INBOX"]
+            
+            all_email_results = []
+            
+            # Search each folder
+            for folder in folders_to_search:
+                try:
+                    # Ensure connection is still active
+                    if self.connection is None:
+                        await self._connect()
+                    
+                    # Select folder
+                    status, _ = self.connection.select(folder)
+                    if status != "OK":
+                        logger.warning(f"Could not select folder: {folder}")
+                        continue
+                    
+                    # Build search criteria
+                    search_criteria = []
+                    
+                    # Add keyword search (search in subject and body)
+                    if params.keywords and params.keywords.strip():
+                        # IMAP search for keywords in subject or body
+                        search_criteria.append(f'OR SUBJECT "{params.keywords}" BODY "{params.keywords}"')
+                    
+                    # Add date filters
+                    if params.date_from:
+                        date_obj = datetime.strptime(params.date_from, "%Y-%m-%d")
+                        search_criteria.append(f'SINCE "{date_obj.strftime("%d-%b-%Y")}"')
+                    
+                    if params.date_to:
+                        date_obj = datetime.strptime(params.date_to, "%Y-%m-%d")
+                        search_criteria.append(f'BEFORE "{date_obj.strftime("%d-%b-%Y")}"')
+                    
+                    # Perform search
+                    search_query = " ".join(search_criteria) if search_criteria else "ALL"
+                    
+                    # Ensure connection is still active before search
+                    if self.connection is None:
+                        await self._connect()
+                        status, _ = self.connection.select(folder)
+                        if status != "OK":
+                            continue
+                    
+                    status, message_ids = self.connection.search(None, search_query)
+                    if status != "OK" or not message_ids[0]:
+                        continue
+                    
+                    # Get message IDs and limit per folder to avoid timeout
+                    ids = message_ids[0].split()
+                    
+                    # Limit emails per folder when searching all folders
+                    folder_limit = params.max_results if params.folder != "ALL" else min(params.max_results, 20)
+                    limited_ids = ids[-folder_limit:]  # Get most recent emails from this folder
+                    
+                    # Get details for each message
+                    for msg_id in reversed(limited_ids):  # Reverse to get newest first
+                        try:
+                            # Break early if we have enough results across all folders
+                            if len(all_email_results) >= params.max_results:
+                                break
+                                
+                            email_result = await self._get_message_details(msg_id.decode(), snippet_only=True, folder=folder)
+                            if email_result:
+                                # Filter by attachments if requested
+                                if params.include_attachments and not email_result.has_attachments:
+                                    continue
+                                all_email_results.append(email_result)
+                        except Exception as e:
+                            logger.warning(f"Failed to get details for message {msg_id} in folder {folder}: {e}")
+                            continue
+                            
+                    # Break early if we have enough results
+                    if len(all_email_results) >= params.max_results:
+                        break
+                            
+                except Exception as e:
+                    logger.warning(f"Failed to search folder {folder}: {e}")
                     continue
             
-            return email_results
+            # Sort all results by date (newest first) and limit
+            all_email_results.sort(key=lambda x: x.date, reverse=True)
+            return all_email_results[:params.max_results]
             
         except Exception as e:
             raise ValueError(f"Yahoo search failed: {str(e)}")
         finally:
             await self._disconnect()
     
-    async def get_email_details(self, email_id: str) -> EmailDetails:
+    async def get_email_details(self, email_id: str, folder: str = "INBOX") -> EmailDetails:
         """Get detailed information about a specific email."""
         await self._connect()
         
         try:
-            # Select INBOX first
-            self.connection.select("INBOX")
+            # Try the specified folder first
+            folders_to_try = [folder] if folder != "ALL" else await self.list_folders()
             
-            email_result = await self._get_message_details(email_id, snippet_only=False)
-            if not email_result:
-                raise ValueError("Email not found")
+            for folder_name in folders_to_try:
+                try:
+                    # Select folder
+                    status, _ = self.connection.select(folder_name)
+                    if status != "OK":
+                        continue
+                    
+                    email_result = await self._get_message_details(email_id, snippet_only=False, folder=folder_name)
+                    if email_result:
+                        return email_result
+                        
+                except Exception as e:
+                    logger.warning(f"Failed to get email {email_id} from folder {folder_name}: {e}")
+                    continue
             
-            return email_result
+            raise ValueError("Email not found in any folder")
             
         except Exception as e:
             raise ValueError(f"Failed to get Yahoo email details: {str(e)}")
         finally:
             await self._disconnect()
     
-    async def _get_message_details(self, message_id: str, snippet_only: bool = False) -> Optional[EmailDetails]:
+    async def _get_message_details(self, message_id: str, snippet_only: bool = False, folder: str = "INBOX") -> Optional[EmailDetails]:
         """Get details for a specific message."""
         try:
+            # Ensure connection is active
+            if self.connection is None:
+                return None
+            
             # Fetch message
             status, message_data = self.connection.fetch(message_id, "(RFC822)")
             if status != "OK" or not message_data[0]:
@@ -186,6 +290,7 @@ class YahooService:
                 snippet=body[:200] + ("..." if len(body) > 200 else ""),
                 has_attachments=len(attachments) > 0,
                 provider="yahoo",
+                folder=folder,
                 body=body if not snippet_only else body[:200] + ("..." if len(body) > 200 else ""),
                 attachments=attachments if attachments else None
             )

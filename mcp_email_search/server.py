@@ -39,9 +39,10 @@ async def search_emails(
     date_to: str = None,
     max_results: int = 10,
     include_attachments: bool = False,
+    folder: str = "INBOX",
 ) -> str:
     """
-    Search emails across Gmail and/or Yahoo accounts using keywords and date filters.
+    Search emails across Yahoo accounts using keywords and date filters.
     
     Args:
         keywords: Keywords to search for in email content, subject, or sender
@@ -50,6 +51,7 @@ async def search_emails(
         date_to: End date in YYYY-MM-DD format (optional)
         max_results: Maximum number of results to return (1-50, default: 10)
         include_attachments: Whether to include emails with attachments (default: False)
+        folder: Email folder to search in - "INBOX", "Sent", "Drafts", or "ALL" for all folders (default: "INBOX")
     
     Returns:
         Formatted string containing search results
@@ -63,6 +65,7 @@ async def search_emails(
             date_to=date_to,
             max_results=min(max_results, 50),
             include_attachments=include_attachments,
+            folder=folder,
         )
         
         results: List[EmailSearchResult] = []
@@ -93,6 +96,7 @@ async def search_emails(
 Search Parameters:
 - Keywords: "{search_params.keywords}"
 - Provider: {search_params.provider}
+- Folder: {search_params.folder}
 - Date Range: {search_params.date_from or "any"} to {search_params.date_to or "any"}
 - Max Results: {search_params.max_results}
 - Include Attachments: {search_params.include_attachments}
@@ -103,7 +107,7 @@ Results:
         if limited_results:
             for i, email in enumerate(limited_results, 1):
                 response_text += f"""
-{i}. [{email.provider.upper()}] {email.subject}
+{i}. [{email.provider.upper()}/{email.folder}] {email.subject}
    From: {email.sender}
    Date: {email.date.strftime("%Y-%m-%d %H:%M")}
    Preview: {email.snippet}
@@ -124,13 +128,40 @@ Results:
 
 
 @app.tool()
-async def get_email_details(email_id: str, provider: str) -> str:
+async def list_email_folders() -> str:
+    """
+    List available email folders in Yahoo account.
+    
+    Returns:
+        Formatted string containing list of available folders
+    """
+    try:
+        folders = await yahoo_service.list_folders()
+        
+        response_text = "Available Email Folders:\n\n"
+        for i, folder in enumerate(folders, 1):
+            response_text += f"{i}. {folder}\n"
+        
+        response_text += "\nYou can use these folder names in the 'folder' parameter when searching emails."
+        response_text += "\nUse 'ALL' to search across all folders."
+        
+        return response_text
+        
+    except Exception as e:
+        error_message = f"Error listing folders: {str(e)}"
+        logger.error(error_message)
+        return error_message
+
+
+@app.tool()
+async def get_email_details(email_id: str, provider: str, folder: str = "INBOX") -> str:
     """
     Get detailed content of a specific email by ID.
     
     Args:
         email_id: The unique ID of the email to retrieve
         provider: Email provider - only "yahoo" supported
+        folder: Email folder to search in (default: "INBOX")
     
     Returns:
         Formatted string containing detailed email information
@@ -139,14 +170,15 @@ async def get_email_details(email_id: str, provider: str) -> str:
         if provider != "yahoo":
             return "Error: Only 'yahoo' provider is supported"
         
-        email_details: EmailDetails = await yahoo_service.get_email_details(email_id)
+        email_details: EmailDetails = await yahoo_service.get_email_details(email_id, folder)
         
-        response_text = f"""Email Details [{provider.upper()}]:
+        response_text = f"""Email Details [{provider.upper()}/{email_details.folder}]:
 
 Subject: {email_details.subject}
 From: {email_details.sender}
 To: {', '.join(email_details.recipients)}
 Date: {email_details.date.strftime("%Y-%m-%d %H:%M:%S %Z")}
+Folder: {email_details.folder}
 {f"Attachments: {', '.join(email_details.attachments)}" if email_details.attachments else "No attachments"}
 
 Content:

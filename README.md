@@ -4,7 +4,8 @@ A Model Context Protocol (MCP) server that enables AI agents to search and retri
 
 ## Features
 
-- 🔍 **Search:**: Yahoo Mail support
+- 🔍 **Email Search**: Yahoo Mail support with comprehensive search capabilities
+- 📁 **Folder Search**: Search specific folders (INBOX, Sent, Drafts) or all folders
 - 📅 **Date range filtering**: Search emails within specific time periods  
 - 🔑 **Keyword search**: Search in subject, body, and sender fields
 - 📎 **Attachment filtering**: Find emails with or without attachments
@@ -23,6 +24,7 @@ Search emails from Yahoo accounts using keywords and filters.
 - `date_to` (string, optional): End date in YYYY-MM-DD format  
 - `max_results` (int): Maximum results to return, 1-50 (default: 10)
 - `include_attachments` (bool): Whether to include emails with attachments (default: false)
+- `folder` (string): Email folder to search - "INBOX", "Sent", "Drafts", or "ALL" for all folders (default: "INBOX")
 
 ### `get_email_details`
 Get detailed content of a specific email by ID.
@@ -30,6 +32,12 @@ Get detailed content of a specific email by ID.
 **Parameters:**
 - `email_id` (string): The unique ID of the email to retrieve
 - `provider` (string): Email provider - "yahoo"
+- `folder` (string, optional): Email folder to search in (default: "INBOX")
+
+### `list_email_folders`
+List all available email folders in your Yahoo account.
+
+**Returns:** List of folder names that can be used in search operations.
 
 ### `check_email_config`
 Check the configuration status of email accounts and required environment variables.
@@ -102,11 +110,52 @@ Alternatively, if you installed the package:
 
 Once configured with Claude Desktop, you can use natural language commands:
 
+### Basic Search
 - "Search for emails about 'meeting' from last week"
 - "Find emails from john@company.com in December 2024"
 - "Show me emails with attachments containing 'invoice'"
-- "Search Gmail for emails about 'project alpha' from this month"
+
+### Folder-Specific Search
+- "Search my Sent folder for emails about 'project alpha'"
+- "Find emails in my Archive folder from this month"
+- "Search my Drafts folder for unsent emails"
+- "Look for emails across all my folders containing 'important'"
+
+### Folder Management
+- "List my email folders"
+- "What folders are available in my Yahoo account?"
+
+### Email Details
 - "Get details of that email from Yahoo with ID xyz123"
+- "Show me the full content of the email in my Sent folder with ID abc456"
+
+## Folder Search Features
+
+### Available Folder Options
+- **INBOX** (default): Your main inbox folder
+- **Sent**: Emails you've sent
+- **Drafts**: Draft emails
+- **Archive**: Archived emails
+- **Trash**: Deleted emails
+- **Custom folders**: Any custom folders you've created
+- **ALL**: Search across all available folders
+
+### Folder Search Examples
+```python
+# Search specific folder
+search_emails(keywords="meeting", folder="Sent")
+
+# Search all folders
+search_emails(keywords="important", folder="ALL", max_results=20)
+
+# List available folders
+list_email_folders()
+```
+
+### Performance Notes
+- Searching specific folders is faster than searching ALL folders
+- When searching ALL folders, results are limited per folder to maintain performance
+- Most recent emails are prioritized in search results
 
 ## Security & Privacy
 
