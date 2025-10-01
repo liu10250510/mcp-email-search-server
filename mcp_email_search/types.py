@@ -59,3 +59,41 @@ class EmailDetails(EmailSearchResult):
         default=None, 
         description="List of attachment filenames"
     )
+
+
+class EmailClassificationResult(BaseModel):
+    """Result of email classification."""
+    
+    email_id: str = Field(description="Unique email ID")
+    category: Literal[
+        "job_applications", 
+        "hotel_airline_bookings", 
+        "shopping_receipts", 
+        "friends_emails", 
+        "linkedin_notifications", 
+        "promotions", 
+        "hockey_team", 
+        "unknown"
+    ] = Field(description="Classification category")
+    confidence: float = Field(
+        ge=0.0, 
+        le=1.0, 
+        description="Confidence score for classification (0.0 to 1.0)"
+    )
+    reasoning: Optional[str] = Field(
+        default=None, 
+        description="Brief explanation of the classification"
+    )
+
+
+class EmailMoveResult(BaseModel):
+    """Result of email move operation."""
+    
+    email_id: str = Field(description="Unique email ID")
+    source_folder: str = Field(description="Source folder name")
+    destination_folder: str = Field(description="Destination folder name")
+    success: bool = Field(description="Whether the move was successful")
+    error_message: Optional[str] = Field(
+        default=None, 
+        description="Error message if move failed"
+    )

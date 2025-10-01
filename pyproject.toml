@@ -4,14 +4,14 @@ build-backend = "hatchling.build"
 
 [project]
 name = "mcp-email-search"
-version = "1.0.0"
-description = "MCP server for searching Yahoo emails by keywords and time range"
+version = "2.0.0"
+description = "MCP server for email search with client-side LLM classification"
 readme = "README.md"
 license = {text = "MIT"}
 authors = [
     {name = "Lucy", email = "lucy@example.com"}
 ]
-keywords = ["mcp", "email", "search", "yahoo"]
+keywords = ["mcp", "email", "search", "classification", "yahoo", "llm"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
@@ -25,9 +25,9 @@ requires-python = ">=3.10"
 dependencies = [
     "mcp>=1.0.0",
     "imapclient>=3.0.1",
+    "pydantic>=2.0.0",
     "python-dotenv>=1.0.0",
-    "pydantic>=2.5.0",
-    "fastmcp>=2.12.4",
+    "fastmcp>=0.2.0",
 ]
 
 [project.optional-dependencies]
@@ -42,9 +42,8 @@ dev = [
 [project.scripts]
 mcp-email-search = "mcp_email_search.server:main"
 
-[tool.setuptools.packages.find]
-where = ["."]
-include = ["mcp_email_search*"]
+[tool.hatch.build.targets.wheel]
+packages = ["mcp_email_search"]
 
 [tool.black]
 line-length = 88
