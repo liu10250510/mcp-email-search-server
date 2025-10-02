@@ -5,16 +5,8 @@ A Model Context Protocol (MCP) server that enables AI agents to search, retrieve
 ## Features
 
 - 🔍 **Email Search**: Yahoo Mail support with comprehensive search capabilities
-- 📁 **Folder Management**: Search specific folders (INBOX, Sent, Drafts) or all folders
-- 📅 **Date range filtering**: Search emails within specific time periods  
-- 🔑 **Keyword search**: Search in subject, body, and sender fields
-- 📎 **Attachment filtering**: Find emails with or without attachments
 - 🎯 **Email Classification**: Intelligent email classification workflow with flexible processing options
 - 📤 **Email Movement**: Move emails to classified folders based on content analysis
-- 📊 **Bulk Operations**: Process multiple emails with confidence-based filtering
-- 🔐 **Secure authentication**: App Passwords for Yahoo
-- 🛡️ **Privacy-focused**: All processing happens locally
-- 🔒 **Message-ID System**: Reliable email identification using RFC-compliant Message-IDs
 
 ## Email Classification Workflow
 
@@ -36,17 +28,7 @@ The server provides a comprehensive email classification system that works with 
 - Returns email details (subject, sender, content preview)
 - Provides guidance for next steps
 
-#### Step 2: Move Emails (Choose One Approach)
-
-**Option A: Single Email Movement**
-**Tool:** `move_email_thread`
-- Moves one email at a time to its classified folder
-- Validates category selection against available categories
-- Creates classification folders automatically if they don't exist
-- Returns success/failure status
-- **Best for**: Processing individual emails or small batches
-
-**Option B: Bulk Email Movement**
+#### Step 2: Move Emails
 **Tool:** `bulk_move_emails_by_classification`
 - Processes multiple email classifications at once
 - Accepts JSON array of email classifications with confidence scores
@@ -55,24 +37,6 @@ The server provides a comprehensive email classification system that works with 
 - **Best for**: Processing many emails efficiently after AI batch analysis
 
 ### Typical Workflow Examples
-
-#### Approach A: Single Email Processing
-```
-1. User: "Find emails from last week about job applications"
-   → Uses search_emails tool
-
-2. User: "Prepare email MSG-ID-123@yahoo.com for classification"
-   → Uses get_email_for_classification tool
-   → Returns formatted email content and available categories
-
-3. AI analyzes the email content and determines it's a job application
-
-4. User: "Move this email to job_applications category"
-   → Uses move_email_thread tool
-   → Email is moved to job_applications folder
-```
-
-#### Approach B: Bulk Email Processing
 ```
 1. User: "Find all unread emails from this month"
    → Uses search_emails tool
@@ -87,19 +51,6 @@ The server provides a comprehensive email classification system that works with 
    → Uses bulk_move_emails_by_classification tool
    → All emails moved to appropriate folders with confidence filtering
 ```
-
-### Classification Categories
-
-The system supports 9 predefined categories:
-- **job_applications**: Job application emails and employer responses
-- **hotel_airline_bookings**: Travel bookings and itineraries  
-- **bank**: Bank statements and financial notifications
-- **shopping_receipts**: Order confirmations and purchase receipts
-- **friends_emails**: Personal emails from friends and family
-- **linkedin_notifications**: LinkedIn alerts and notifications
-- **promotions**: Marketing emails and newsletters
-- **hockey_team**: TeamSnap and Markham Majors team communications
-- **unknown**: Emails that don't fit other categories
 
 ## Tools Available
 
@@ -145,19 +96,8 @@ Check the configuration status of email accounts and required environment variab
 
 **Returns:** Formatted email content with available categories and next steps.
 
-#### `move_email_thread`
-**Step 2:** Move a single email to its classified folder.
-
-**Parameters:**
-- `email_id` (string): The unique Message-ID of the email to move
-- `category` (string): Classification category (must be exact name from available categories)
-- `source_folder` (string, optional): Source folder where email resides (default: "INBOX")
-- `provider` (string, optional): Email provider - "yahoo" (default: "yahoo")
-
-**Returns:** Success/failure status message.
-
 #### `bulk_move_emails_by_classification`
-**Step 3:** Move multiple emails to their classified folders in batch.
+**Step 2:** Move multiple emails to their classified folders in batch.
 
 **Parameters:**
 - `email_classifications` (string): JSON array of email classifications:
@@ -258,8 +198,6 @@ Once configured with Claude Desktop, you can use natural language commands:
 
 ### Email Classification Workflow Examples
 
-#### Single Email Classification (Option A)
-
 **Use Case:** Processing individual emails or small batches
 
 **1. Find and prepare email:**
@@ -277,7 +215,7 @@ User: "Move this email to job_applications category"
 → Result: Email moved to job_applications folder
 ```
 
-#### Bulk Email Classification (Option B)
+#### Bulk Email Classification
 
 **Use Case:** Processing many emails efficiently
 
@@ -304,69 +242,6 @@ User: "Process this bulk classification with minimum confidence 0.7"
 → Tool: bulk_move_emails_by_classification
 → Result: High-confidence emails moved, low-confidence skipped
 ```
-
-#### When to Use Each Approach
-
-**Use Single Email (Option A) when:**
-- Processing 1-5 emails at a time
-- Want immediate feedback on each email
-- Learning the system or testing classifications
-- Dealing with important emails requiring individual attention
-
-**Use Bulk Processing (Option B) when:**
-- Processing 10+ emails at once
-- Want efficiency over individual control
-- Have clear confidence thresholds
-- Batch processing routine email cleanup
-[
-### Folder-Specific Search
-- "Search my Sent folder for emails about 'project alpha'"
-- "Find emails in my Archive folder from this month"
-- "Search my Drafts folder for unsent emails"
-- "Look for emails across all my folders containing 'important'"
-
-## Message-ID System
-
-The server uses RFC-compliant Message-ID headers for reliable email identification:
-
-- **Unique Identification**: Each email has a unique Message-ID regardless of folder
-- **Cross-Folder Tracking**: Find emails even when moved between folders
-- **Reliable Operations**: Consistent email identification for classification workflows
-- **Format**: Standard RFC format like `<unique-id@domain.com>` or `MSG-ID-timestamp@provider.com`
-
-### Message-ID Features
-- Automatic extraction from email headers
-- Fallback generation for emails without Message-IDs
-- Angle bracket handling for proper IMAP search
-- Cross-folder email location and movement
-
-## Folder Search Features
-
-### Available Folder Options
-- **INBOX** (default): Your main inbox folder
-- **Sent**: Emails you've sent
-- **Drafts**: Draft emails
-- **Archive**: Archived emails
-- **Trash**: Deleted emails
-- **Custom folders**: Any custom folders you've created
-- **ALL**: Search across all available folders
-
-### Folder Search Examples
-```python
-# Search specific folder
-search_emails(keywords="meeting", folder="Sent")
-
-# Search all folders
-search_emails(keywords="important", folder="ALL", max_results=20)
-
-# List available folders
-list_email_folders()
-```
-
-### Performance Notes
-- Searching specific folders is faster than searching ALL folders
-- When searching ALL folders, results are limited per folder to maintain performance
-- Most recent emails are prioritized in search results
 
 ## Security & Privacy
 
@@ -395,87 +270,6 @@ list_email_folders()
 - **"Yahoo credentials not configured"**: Set YAHOO_EMAIL and YAHOO_APP_PASSWORD
 - **"Failed to connect to Yahoo"**: Check internet connection and credential validity
 
-## Testing
-
-The project includes comprehensive tests to validate the email classification workflow:
-
-```bash
-# Run the comprehensive test suite
-python test_reorganized_workflow.py
-```
-
-### Test Coverage
-- ✅ Helper function validation (provider, category, valid categories)
-- ✅ Yahoo service connection and folder operations
-- ✅ Step 1 validation (email classification preparation)
-- ✅ Step 2 validation (single email movement)
-- ✅ Step 3 validation (bulk email operations)
-- ✅ Search function validation
-- ✅ Complete 3-step workflow integration
-
-### Expected Test Output
-```
-🧪 Testing Reorganized Email Classification Workflow
-============================================================
-🔧 Testing Helper Functions...
-✅ All helper functions passed!
-
-📧 Testing Yahoo Service Connection...
-✅ Yahoo service connection successful
-
-🔍 Testing Step 1: get_email_for_classification...
-✅ Step 1 validation passed
-
-📤 Testing Step 2: move_email_thread...
-✅ Step 2 validation passed
-
-📊 Testing Step 3: bulk_move_emails_by_classification...
-✅ Step 3 validation passed
-
-🔎 Testing Email Search and Details...
-✅ Search functions passed
-
-🔄 Testing Complete Workflow Integration...
-✅ Complete workflow integration passed
-
-🎉 ALL TESTS COMPLETED SUCCESSFULLY!
-```
-
-## Development
-
-```bash
-# Install in development mode
-pip install -e .[dev]
-
-# Run the server directly
-python -m mcp_email_search.server
-
-# Test with MCP Inspector
-npx @modelcontextprotocol/inspector python -m mcp_email_search.server
-
-# Run comprehensive tests
-python test_reorganized_workflow.py
-
-# Format code
-black mcp_email_search/
-isort mcp_email_search/
-
-# Type checking
-mypy mcp_email_search/
-```
-
-## Architecture
-
-### Project Structure
-```
-mcp_email_search/
-├── __init__.py
-├── server.py              # Main FastMCP server with 3-step classification workflow
-├── types.py               # Type definitions and data models
-└── services/
-    ├── __init__.py
-    └── yahoo.py            # Yahoo Mail service with Message-ID system
-```
 
 ### Key Components
 
