@@ -161,51 +161,11 @@ Once configured with Claude Desktop, you can use natural language commands:
 - "List my email folders"
 - "Check my email configuration status"
 
-### Email Classification Workflow Examples
+### Email Classification and Movement
 
 **Use Case:** Processing individual emails or small batches
-
-**1. Find and prepare email:**
 ```
-User: "Search for unread emails from john@company.com"
-User: "Prepare email MSG-ID-12345@yahoo.com for classification"
-→ Returns: Email content and available categories
-```
-
-**2. AI analyzes and user moves:**
-```
-AI: Analyzes content and determines it's a job application
-User: "Move this email to job_applications category"
-→ Tool: move_email_thread
-→ Result: Email moved to job_applications folder
-```
-
-#### Bulk Email Classification
-
-**Use Case:** Processing many emails efficiently
-
-**1. Find and prepare multiple emails:**
-```
-User: "Search for all emails from this week containing 'order' or 'receipt'"
-User: "Prepare these 15 emails for classification"
-→ Returns: Content for all emails
-```
-
-**2. AI analyzes all and creates bulk classification:**
-```
-AI creates classification JSON:
-[
-  {"email_id": "msg1@example.com", "category": "shopping_receipts", "confidence": 0.92},
-  {"email_id": "msg2@example.com", "category": "promotions", "confidence": 0.65},
-  {"email_id": "msg3@example.com", "category": "job_applications", "confidence": 0.88}
-]
-```
-
-**3. Bulk move with confidence filtering:**
-```
-User: "Process this bulk classification with minimum confidence 0.7"
-→ Tool: bulk_move_emails_by_classification
-→ Result: High-confidence emails moved, low-confidence skipped
+User: "search 5 emails from my inbox received in the last 3 days, classify them based on the attached prompt and move the emails or threads to classified folder"
 ```
 
 ## Security & Privacy
