@@ -8,9 +8,9 @@ A Model Context Protocol (MCP) server that enables AI agents to search, retrieve
 - 🎯 **Email Classification**: Intelligent email classification workflow with flexible processing options
 - 📤 **Email Movement**: Move emails to classified folders based on content analysis
 
-## Email Classification Workflow
+## Email Search, Classification and Movement Workflow
 
-The server provides a comprehensive email classification system that works with AI agents:
+The server provides a comprehensive email search, classification and movement system that works with AI agents:
 
 ### How It Works
 
@@ -193,8 +193,6 @@ Once configured with Claude Desktop, you can use natural language commands:
 - "Show me emails with attachments containing 'invoice'"
 - "List my email folders"
 - "Check my email configuration status"
-
-### Email Classification Workflow Examples
 
 ### Email Classification Workflow Examples
 
