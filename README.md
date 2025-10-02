@@ -19,39 +19,6 @@ The server provides a comprehensive email search, classification and movement sy
 3. **AI Classification**: AI agent analyzes email content and determines category
 4. **Move Emails**: Use classification tools to move emails to appropriate folders
 
-### Classification Tools
-
-#### Step 1: Prepare Email for Classification
-**Tool:** `get_email_for_classification`
-- Retrieves email content formatted for AI analysis
-- Shows available classification categories  
-- Returns email details (subject, sender, content preview)
-- Provides guidance for next steps
-
-#### Step 2: Move Emails
-**Tool:** `bulk_move_emails_by_classification`
-- Processes multiple email classifications at once
-- Accepts JSON array of email classifications with confidence scores
-- Confidence-based filtering (default minimum: 0.7)
-- Comprehensive reporting with success/error/skipped counts
-- **Best for**: Processing many emails efficiently after AI batch analysis
-
-### Typical Workflow Examples
-```
-1. User: "Find all unread emails from this month"
-   → Uses search_emails tool
-   → Returns list of emails with Message-IDs
-
-2. User: "Prepare these 10 emails for classification"
-   → Uses get_email_for_classification for each email
-
-3. AI analyzes all emails and creates bulk classification JSON
-
-4. User: "Process this bulk classification"
-   → Uses bulk_move_emails_by_classification tool
-   → All emails moved to appropriate folders with confidence filtering
-```
-
 ## Tools Available
 
 ### Core Search Tools
@@ -84,7 +51,7 @@ List all available email folders in your Yahoo account.
 #### `check_email_config`
 Check the configuration status of email accounts and required environment variables.
 
-### Email Classification Tools
+### Email Classification and Movement Tools
 
 #### `get_email_for_classification`
 **Step 1:** Retrieve email content formatted for classification analysis.
